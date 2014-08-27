@@ -2,7 +2,7 @@
 Ansible Managing Windows
 ========================
 
-The files in this repository/directory are from a demo given at the Austin Ansible meetup in August 2014. This demo and associated files provide a way to get started and experiment with using Ansible to manage Windows machines. The slides are available on slideshare (http://www.slideshare.net/joehack3r/austin-ansible-august-2014) and a blog post is being written (http://blog.joehack3r.com).
+The files in this repository/directory are from a demo given at the Austin Ansible meetup in August 2014. This demo and associated files provide a way to get started and experiment with using Ansible to manage Windows machines. The slides are available on slideshare (http://www.slideshare.net/joehack3r/austin-ansibleaug2014) and a blog post is being written (http://blog.joehack3r.com).
 
 This demo assumes you are using Amazon Web Services (AWS) and VPC. If you are not using VPC, you can edit the createWindowsInstance.yml and remove vpc_subnet_id when launching the instance.
 
