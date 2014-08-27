@@ -1,0 +1,4 @@
+ansible_ssh_user: administrator
+ansible_ssh_pass: myDemoPass1+2
+ansible_ssh_port: 5986
+ansible_connection: winrm

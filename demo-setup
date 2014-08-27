@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# usage: source ./demo-setup
+# Set $ANSIBLE_HOSTS to file provided from repository
+
+# When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
+if [ -n "$BASH_SOURCE" ] ; then
+	REPO_DIR=`dirname $BASH_SOURCE`
+elif [ $(basename $0) = "demo-setup" ]; then
+	REPO_DIR=`dirname $0`
+else
+	REPO_DIR="$PWD/hacking"
+fi
+
+# The below is an alternative to readlink -fn which doesn't exist on OS X
+# Source: http://stackoverflow.com/a/1678636
+DEMO_HOME=`python -c "import os; print(os.path.realpath('$REPO_DIR'))"`
+
+unset ANSIBLE_HOSTS
+export ANSIBLE_HOSTS=$DEMO_HOME/hosts
+
+cd $DEMO_HOME
+
+echo ""
+echo "Setting Ansible hosts file to one provided from repository..."
+echo ""
+echo "ANSIBLE_HOSTS=$ANSIBLE_HOSTS"
+echo ""
+echo "Ready to run some demos!"
+echo ""
+echo "Remember, examples has some...well...examples."
+echo ""

@@ -1,0 +1,25 @@
+# Windows Ping: Good sanity check to make sure the Ansible control machine can communicate with Windows and Windows replies back:
+
+ansible windows --module-name=win_ping
+
+# User management
+ansible windows --module-name=win_user --args="name=ansible password=fooBar1+3"
+ansible windows --module-name=win_user --args="name=ansible2 password=@ns1bl3"
+ansible windows --module-name=win_user --args="name=ansible2 state=absent"
+
+# Useful to have the AWS Command Line Interface (CLI) installed:
+ansible windows --module-name=win_get_url --args="url='https://s3.amazonaws.com/aws-cli/AWSCLI64.msi' dest='C:\AWSCLI64.msi'"
+ansible windows --module-name=win_msi --args="path='C:\AWSCLI64.msi'"
+
+## Starting a series of Windows features/roles here.
+## For Windows Features, run Get-WindowsFeature on the machine to see current information.
+## There isn't a command or shell module for Windows yet so we'll logon to the machine and run that command manuually.
+# Install IIS
+ansible windows --module-name=win_feature --args="name='Web-Server' restart=yes"
+# BUG: Does not install multiple features:
+ansible windows --module-name=win_feature --args="name='Web-Server, Web-App-Dev, Web-Net-Ext, Web-Net-Ext45, Web-Asp-Net, Web-Asp-Net45' restart=yes"
+# Use PowerShell script since multiple features do not work:
+ansible windows --module-name=script --args="files/installIis.ps1"
+
+# Set Ec2 Config values before creating AMI
+ansible windows --module-name=script --args="files/windows-ec2configb4ami.ps1"

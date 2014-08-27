@@ -1,0 +1,92 @@
+---
+# Launch an ec2 instance in EC2-Classic and tag it
+# This play operates on the local (Ansible control) machine.
+- name: Start instance(s)
+  hosts: local
+  connection: local
+  gather_facts: false
+
+  vars:
+    count: 1
+
+  vars_prompt:
+    - name: "region"
+      prompt: "Which region are you using (Default is: us-east-1)"
+      private: no
+      default: "us-east-1"
+
+    - name: "image"
+      prompt: "What is the Amazon Machine Image (AMI) ID to use (Default is: Windows 2012 R2 Base)"
+      private: no
+      default: "ami-9ade1df2"
+
+    - name: "instance_type"
+      prompt: "What instance type do you want to use (Default is: m1.medium)"
+      private: no
+      default: "m1.medium"
+
+    - name: "iam_role"
+      prompt: "What is the IAM Role assign to the instance (Default is: None)"
+      private: no
+      default: ""
+
+    - name: "security_group"
+      prompt: "What is the security group name where the instance should be created"
+      private: no
+
+    - name: "sshkeypairname"
+      prompt: "What is the SSH Key Pair name to use for connecting to the instance (Default is: ansible)"
+      private: no
+      default: "ansible"
+
+    - name: "vpc_subnet_id"
+      prompt: "What is the VPC Subnet ID where the instance will reside"
+      private: no
+
+  # Launch instances with the following parameters.  Register the output.
+  tasks:
+    - name: Launch instance 
+      local_action:
+        module: ec2
+        region: "{{region}}"
+        image: "{{image}}"
+        instance_type: "{{instance_type}}"
+        instance_profile_name: "{{iam_role}}"
+        group: "{{security_group}}"
+        keypair: "{{sshkeypairname}}"
+        vpc_subnet_id: "{{vpc_subnet_id}}"
+        count: "{{count}}"
+        user_data: "<powershell>
+  $storageDir = $pwd\n
+  $webclient = New-Object System.Net.WebClient\n
+  $url = \"https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1\"\n
+  $file = \"C:\\Program Files\\Amazon\\Ec2ConfigService\\Scripts\\ConfigureRemotingForAnsible.ps1\"\n
+  $webclient.DownloadFile($url,$file)\n
+  $VerbosePreference=\"Continue\"\n
+  & $file\n
+  net user ansible myDemoPass0+1 /add\n
+  net localgroup administrators ansible /add\n
+  $user=[adsi]\"WinNT://localhost/Administrator,user\"\n
+  $user.SetPassword(\"myDemoPass1+2\")\n
+</powershell>"
+        wait: true
+      register: ec2
+
+    # Use with_items to add each instance(s) private IP to a new hostgroup for use in subsequent plays.
+    - name: Add new instance(s) to host group
+      add_host: hostname={{item.private_ip}} groupname=windows
+      with_items: ec2.instances
+
+    - name: Tag instance(s)
+      local_action: ec2_tag
+        resource={{item.id}}
+        state=present
+        region={{region}}
+      with_items: ec2.instances
+      args:
+        tags:
+          Name: WindowsServer-Managed-By-Ansible
+
+    - name: Wait for the instance(s) to boot by checking the ssh port
+      wait_for: host={{item.private_ip}} port=5986 delay=60 timeout=600 state=started
+      with_items: ec2.instances
